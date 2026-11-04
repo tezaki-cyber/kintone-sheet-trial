@@ -30,10 +30,11 @@
     window.addEventListener('resize', fit);
   }
   async function addButton() {
-    const box = kintone.app.getHeaderMenuSpaceElement();
-    if (!ALLOWED.includes(await hash(kintone.getLoginUser().code))) return;
+    // 入れ物のある一覧は、開いた人全員に出す。書けるかどうかはキントーンの権限のまま
     const root = document.getElementById('progress-sheet-root');
     if (root) { if (!root.firstChild) mount(root); return; }
+    const box = kintone.app.getHeaderMenuSpaceElement();
+    if (!ALLOWED.includes(await hash(kintone.getLoginUser().code))) return;
     if (!box || document.getElementById('progress-sheet-open')) return;
     const b = document.createElement('button');
     b.id = 'progress-sheet-open';
