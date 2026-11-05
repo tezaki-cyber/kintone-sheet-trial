@@ -1,0 +1,338 @@
+var window = {};
+// スプレッドシート「商品進捗表」の各タブの列の作り。1語が1列で「列名~2段目」、2段目は記入する部署か子の見出し
+(function () {
+  const CTRY = '~韓国 ~中国 ~アジア（香港マカオ台湾含め） ~台湾 ~香港 ~マカオ ~タイ ~マレーシア ~ｼﾝｶﾞﾎﾟｰﾙ ~フィリピン ~ベトナム ~インドネシア ~サウジアラビア ~クウェート ~UAE ~カザフスタン ~南アフリカ ~アメリカ ~カナダ ~メキシコ ~ブラジル ~チリ ~ｵｰｽﾄﾗﾘｱ ~ニュージーランド ~EU ~イギリス ~フランス ~ドイツ ~オランダ ~スペイン ~ポルトガル ~オーストリア、ポーランド、ベルギー、スイス、フィンランド、ノルウェー、デンマーク、スウェーデン、エストニア、ラトビア、リトアニア';
+  const CTRY2 = '~韓国 ~中国 ~アジア（香港マカオ台湾含め） ~香港 ~マカオ ~台湾 ~タイ ~ｼﾝｶﾞﾎﾟｰﾙ ~マレーシア ~フィリピン ~ベトナム ~インドネシア ~サウジアラビア ~クウェート ~UAE ~カザフスタン ~南アフリカ ~アメリカ ~カナダ ~ブラジル ~チリ ~メキシコ ~ｵｰｽﾄﾗﾘｱ ~ニュージーランド ~EU ~イギリス ~フランス ~ドイツ ~オランダ ~スペイン ~ポルトガル ~オーストリア ~ポーランド ~他EU、欧州各国（ベルギー、スイス、フィンランド、ノルウェー、デンマーク、スウェーデン、エストニア、ラトビア、リトアニア）';
+  const SRC = {
+    '一般MD': `eだけ~ 権利元~企 版数~企 JAN~企 商品名~企 企画担当~企 国内ライツ~企 海外ライツ~企 制作~制 製造先~制 種類~企 税抜~企 税込~企 発売日~営 案内格納期限（解禁1週前）~企 一般解禁日（金曜日）~企 問屋案内（火曜日）~営 営業〆（火曜日）~営 部決(金曜日)~制 納品日~制 納品確認~制 国内証紙~企 海外証紙~企 国内証紙支給デッド~企 海外証紙支給デッド~ デザイン依頼先~企 営業案内画像~企 本体ｽﾃｰﾀｽ~企 副資材ｽﾃｰﾀｽ~企 入稿日~制 校了日~制 目標売上~営 想定数量~営 仮売上~営 受注数量~営 想定粗利~営 海外案内可否${CTRY} その他メモ~ALL 契約期間~ALL`,
+    'てくとも': `all~企 権利元~企 版数~企 JAN~企 商品名~企 企画担当~企 国内ライツ~企 海外ライツ~企 制作~制 製造先~制 種類~企 税抜~企 税込~企 発売日~営 案内格納期限（解禁1週前）~営 一般解禁日（金曜日）~マーケ 問屋案内（火曜日）~営 一般予約開始日~営 営業〆（金曜日）~営 部決(金曜日)~制 納品日~制 納品確認~制 国内証紙~企 海外証紙~企 国内証紙支給デッド~企 海外証紙支給デッド~ デザイン依頼先~企 営業案内画像~企 本体ｽﾃｰﾀｽ~企 帽子とポンポンPANTONE共有済かどうか~企 副資材ｽﾃｰﾀｽ~企 本体入稿日~制 PKG入稿日~制 校了日~制 目標売上~営 想定数量~営 仮売上~営 受注数量~営 想定粗利~営 海外案内可否${CTRY} その他メモ~ALL 契約期間~`,
+    '催事': `~企 権利元~企 版数~企 JAN~企 商品名~企 企画担当~企 国内ライツ~企 海外ライツ~企 制作~制 営業~営 製造先~制 種類~企 税抜~企 税込~企 案内提出期限（解禁1週前）~企 一般解禁日~企 営業〆~営 部決~制 中国工場出荷日~ 納品日~制 納品確認~制 国内証紙~企 海外証紙~企 国内証紙支給デッド~制 海外証紙支給デッド~制 海外案内~企 デザイン依頼先~企 営業案内画像~企 ステータス本体~企 ステータス副資材~企 入稿日~制 校了日~制 ~現場 ~現場分納 ~ミクサ ~ゲマ秋葉原 ~その他 ~その他２ ~その他３ ~ＥＣ ~ＥＣ事後 ~海外問屋 ~海外ＥＣ ~海外ｱﾆﾒｲﾄ その他メモ~ALL 海外案内可否~韓国 ~中国 ~アジア（香港マカオ台湾含め） ~台湾 ~香港 ~マカオ ~タイ ~マレーシア ~ｼﾝｶﾞﾎﾟｰﾙ ~フィリピン ~ベトナム ~インドネシア ~サウジアラビア ~クウェート ~UAE ~カザフスタン ~南アフリカ ~アメリカ ~カナダ ~メキシコ ~ブラジル ~チリ ~ｵｰｽﾄﾗﾘｱ ~ニュージーランド ~イギリス、フランス、ドイツ、オランダ、スペイン、ポルトガル、オーストリア、ポーランド、ベルギー、スイス、フィンランド、ノルウェー、デンマーク、スウェーデン、エストニア、ラトビア、リトアニア`,
+    'ライブ・EC': `F~ 権利元~企 販路~企 版数~企 JAN~企 商品名~企 企画担当~企 制作~制 営業~営 製造先~制 種類~企 税抜~企 税込~企 部決~制 納品日先行EC~企 納品日現場~制 納品確認~制 国内証紙~企 海外証紙~企 国内証紙支給デッド~企 海外証紙支給デッド~企 海外案内~ デザイン依頼先~ 営業案内画像~企 ステータス本体(ﾃﾞｻﾞｲﾝor色校・日付)~企 ステータス副資材~企 入稿日~制 校了日~制 製造数~現場 ~現場分納 ~バンドリストア ~ゲマ秋葉原 ~その他 ~その他２ ~その他３ ~ＥＣ ~ＥＣ事後 ~海外問屋 ~海外ＥＣ ~海外ｱﾆﾒｲﾄ その他メモ~`,
+    'ウェルビー': `~企 権利元~企 版数~企 JAN~企 商品名~企 賞味期限~企 企画担当~企 制作~制 製造先~企 種類~企 税抜~企 税込~企 発売日~制 一般解禁日（金曜日）~企 営業案内~営 営業〆~営 部決~制 納品日~制 納品確認~制 海外案内~ 証紙~企 デザイン依頼先~企 営業案内画像~企 本体ｽﾃｰﾀｽ~企 副資材ｽﾃｰﾀｽ~企 目標売上~営 想定数量~営 仮売上~営 製造数量~営 想定粗利~営 その他~ALL`,
+    'プライズ・ぬいぐるみ': `初出~ライツ 営業開始※ちゃむ＝予約開始日~営 営業〆~営 部決日~制 サンプル日~制 月~企 販路~企 版数~企 権利元~企・ライツ プライズコード~企 商品名~企 企画担当~企 国内ライツ~ライツ 海外ライツ~ライツ 制作~制 製造先~制 入り数~営 種類~企 アソート相談~営 販売価格~企 ~企 個口数~制 発売日(別注は先方納品日)~営 情報解禁日~マーケ 指定投入日（別注の場合記入）~営 工場出荷日~制 納品日~制 納品確認~制 国内証紙~ライツ 海外証紙~ライツ 海外証紙種類数~ライツ 国内証紙支給デッド~制 海外証紙支給デッド~制 デザイン依頼先~企 営業案内画像~企 ステータス本体~企 ステータス副資材~企 入稿日~制 校了日~制 ~イギリス ~フランス ~ドイツ ~オランダ ~スペイン ~ポルトガル ~ポーランドetc フィギュア原型依頼~制 フィギュアﾃﾞｺﾏｽ依頼~制 フィギュア3Dﾃﾞｰﾀ送付~制 フィギュアﾃﾞｺﾏｽ工場発送~制 T-end~制 パッケージサイズ~W*D*H（㎜） 重量~(kg） カートンサイズ~W*D*H（㎜） 重量~(kg） インナーカートン~W*D*H（㎜） 重量~(kg） 部決シートそのまま記載~数量 ~売り上げ ~粗利 海外案内可否${CTRY2}`,
+    'フィギュア': `Fate~営 ~営 ~企 発売年度~企 発送月~企 権利元~企 版数~企 JAN~企 商品名~企 企画担当~企 国内ライツ~企 海外ライツ~企 ﾃﾞｻﾞｲﾝ~デ 制作~営 製造先~制 種類~企 BOX入数~企 税抜~企 税込~企 発売日~営 案内提出期限（前週金曜日）~企 一般予約開始日（金曜日）~企 営業案内~営 部決シート提出~営 営業〆~営 部決~制 工場出荷日~ 納品日~営 納品確認~制 国内証紙~企 海外証紙~ 海外証紙種類~ライツ ~海外版元 国内証紙支給デッド~制 海外証紙支給デッド~制 校-了デッド~制 ステータス本体~企 ステータス副資材~企 入稿日~制 校了日~制 目標売上~営 想定数量~営 仮売上~営 製造数量~営 想定粗利~営 海外案内可否${CTRY2} その他メモ~ALL ~独占有無`,
+    '特典・販促物': `月~営 稟議番号~営 カテゴリー~営 版数~営 商品名~営 企画~企 制作~制 営業~営 ~デ 製造先~制 種類数~営 部決日~制 納品日~制 納品確認~制 ステータス~営 入稿日~制 校了日~制 SlackURL／memo~`,
+    '声優MD+ボドゲ': `月~企 権利元~企 版数~企 JAN~企 商品名~企 企画担当~企 制作~制 製造先~企 種類~企 税抜~企 税込~企 発売日~制 一般解禁日（金曜日）~企 営業案内~営 営業〆~営 部決~制 納品日~制 納品確認~制 海外案内~ 証紙~企 デザイン依頼先~企 本体ｽﾃｰﾀｽ~企 副資材ｽﾃｰﾀｽ~企 目標売上~営 想定数量~営 仮売上~営 製造数量~営 想定粗利~営 その他~ALL`,
+    '海外再販': `~納品月 版数~企 JAN~企 商品名~企 企画~企 ライツ~企 制作~制 製造先~制 種類~企 税抜~企 税込~企 発売日~営 一般解禁日（金曜日）~企 営業〆（火曜日）~営 部決(金曜日)~制 納品日~制 納品確認~制 国内証紙~企 海外証紙~企 国内証紙支給デッド~企 海外証紙支給デッド~ 本体ｽﾃｰﾀｽ~企 副資材ｽﾃｰﾀｽ~企 入稿日~制 校了日~制 仮売上~営 商品製造数量~営 想定粗利~営 海外案内可否~韓国 ~中国 ~アジア（香港台湾含め） ~台湾 ~香港 ~タイ ~マレーシア ~ｼﾝｶﾞﾎﾟｰﾙ ~フィリピン ~ベトナム ~インドネシア ~中東 ~アメリカ大陸（南米含む） ~アメリカ ~カナダ ~ブラジル ~チリ ~オセアニア ~ｵｰｽﾄﾗﾘｱ ~ニュージーランド ~EU ~イギリス ~フランス ~ドイツ ~オランダ ~スペイン ~ポルトガル ~ポーランドetc その他メモ~ALL`,
+    'オンラインくじ': `海外販路~営 販路~企 受注期間~企 発送(計上月)~企 版数~企 ハウスJAN~営 JAN~営 賞番号~企 景品番号~企 権利元~企 商品名~企 企画担当~企 ライツ~企 制作~企 製造先~制 掛率~営 税抜~企 税込~企 案内ﾃﾞｰﾀお渡し期日~企 解禁日~企 受注開始日~企 営業〆~営 数量確定（部決日）~営 納品日~制 納品確認~制 国内証紙~企 海外証紙~企 証紙支給デッド~企 入稿日~制 ステータス本体~企 ステータス副資材~企 目標売上~営 想定数量~営 仮売上~営 製造数量~営 想定粗利~営 その他メモ~ALL`,
+    'OEM/他': `月~企 権利元~企 版数~企 JAN~企 商品名~企 企画担当~企 制作~企 製造先~制 BCR手数料~制 種類~企 税抜~企 税込~企 発売日~企 部決~制 納品日~営 納品確認~営 証紙~企 入稿日~制 本体ｽﾃｰﾀｽ~企 副資材ｽﾃｰﾀｽ~企 その他メモ~ALL`,
+    'リアルくじ': `~営 発売日~企 オンライン受注~企 版数~企 ハウスJAN~営 JAN~営 賞名~企 選択可否~企 商品名~企 企画担当~企 ライツ~企 制作~企 種類~企 入り数~企 税抜~企 税込~企 製造先~制 掛率~営 税抜~企 税込~企 案内ﾃﾞｰﾀお渡し期日~企 解禁日~企 問屋案内日~営 営業〆~営 数量確定（部決日）~制 納品日~制 納品確認~制 国内証紙~企 海外証紙~企 証紙支給デッド~企 入稿日~制 ステータス本体~企 ステータス副資材~企 ステータス店頭副資材POP類~企 目標売上~営 想定数量~営 仮売上~営 製造数量~営 想定粗利~営 その他メモ~ALL`,
+  };
+  const OWNER = { 企: '企画', 制: '制作', 営: '営業', ライツ: 'ライツ', マーケ: 'マーケ', デ: 'デザイン', ALL: '全部署', '企・ライツ': '企画・ライツ', '': '' };
+  // 表記が違うだけの列は同じ保存先にする
+  const SAME = { ﾃﾞｻﾞｲﾝ: 'デザイン', 本体ｽﾃｰﾀｽ: 'ステータス本体', 副資材ｽﾃｰﾀｽ: 'ステータス副資材', 部決: '部決日', 数量確定: '部決日', 企画: '企画担当', 案内格納期限: '案内提出期限', 解禁日: '一般解禁日', 情報解禁日: '一般解禁日', 商品製造数量: '製造数量', その他: 'その他メモ', 'SlackURL／memo': 'その他メモ', 問屋案内日: '問屋案内', '営業開始※ちゃむ＝予約開始日': '営業開始', 案内ﾃﾞｰﾀお渡し期日: '案内提出期限' };
+  const label = name => { const s = name.replace(/[（(].*$/, ''); return SAME[s] || s; };
+  const QTY = /^(現場|現場分納|ミクサ|ゲマ秋葉原|その他|その他２|その他３|ＥＣ|ＥＣ事後|海外問屋|海外ＥＣ|海外ｱﾆﾒｲﾄ)$/;
+  const codeOf = s => 'シート_' + s.replace('〆', '締').replace(/[^\p{L}\p{N}_・･＄￥]/gu, '');
+  function parse(src) {
+    let run = '', spare = 0;
+    const seen = {};
+    return src.split(' ').map(token => {
+      let [name, sub] = token.split('~');
+      if (sub[0] === '↓') { name = '商品名'; sub = '企'; } // 2段目が記入の注意書きの列
+      const owner = sub in OWNER;
+      if (owner) run = ''; else if (name) run = name;
+      const text = owner ? name : sub, top = owner ? OWNER[sub] : run.replace(/[〇"].*$/, '').replace(/^"/, '');
+      const w = text === '商品名' ? 360 : /メモ/.test(text) ? 180 : Math.max(56, Math.min(200, text.length * 13 + 24));
+      // 保存先。子の見出しは親の名前を付けて分ける。名前のない列と同じタブに2つある列は番号で分ける
+      let key = !text || /^(eだけ|all|F|Fate)$/.test(text) ? `予備${++spare}` : owner ? label(text) : top ? `${top}_${text}` : QTY.test(text) ? `製造数_${text}` : `追加_${text}`;
+      seen[key] = (seen[key] || 0) + 1;
+      if (seen[key] > 1) key += seen[key];
+      const memo = key === 'その他メモ';
+      return { name: text, w, dept: 'K', type: memo ? 'memo' : 'text', opts: null, lock: false, grp: null, arrow: false, top: top.replace(/^"/, ''), key, code: memo ? key : codeOf(key) };
+    });
+  }
+  const list = Object.entries(SRC).map(([name, src]) => ({ name, cols: parse(src) }));
+  // キントーンに足す項目。その他メモは今ある項目を使う
+  const fields = new Map();
+  for (const t of list) for (const c of t.cols) if (c.key !== 'その他メモ') fields.set(c.code, c.key);
+  list.fields = [...fields].map(([code, name]) => ({ code, label: name.slice(0, 128) }));
+  list.key = 'シート_進捗タブ';
+  list.parse = parse;
+  window.SheetTabs = list;
+})();
+
+const SheetTabs = window.SheetTabs;
+// スプレッドシートとキントーンを突き合わせる判定。通信はしない
+const META = { order: 'シート_行順', sep: 'シート_区切り', rowKey: 'シート_行キー', snapshot: 'シート_取込記録' };
+const clean = s => String(s == null ? '' : s).replace(/\s+/g, '').replace(/~/g, '');
+const text = s => String(s == null ? '' : s).replace(/\r\n/g, '\n');
+const empty = s => !String(s).trim() || String(s).trim() === '-';
+
+// 見出しの2行から、シートの列番号と項目コードの対応を作る
+function columnsOf(nameRow, subRow, parse) {
+  const at = [], tokens = [];
+  for (let i = 0; i < Math.max(nameRow.length, subRow.length); i++) {
+    const x = clean(nameRow[i]), y = clean(subRow[i]);
+    if (x || y) { at.push(i); tokens.push(`${x}~${y}`); }
+  }
+  return parse(tokens.join(' ')).map((c, k) => ({ index: at[k], code: c.code, name: c.name }));
+}
+
+// 商品の行か、月やイベント名の区切りの行かを見分ける
+function rowKind(row, cols) {
+  const cell = name => { const c = cols.find(x => x.name === name); return c ? String(row[c.index] == null ? '' : row[c.index]).trim() : ''; };
+  if (row.every(v => empty(v))) return 'blank';
+  if (empty(cell('商品名'))) return 'sep';
+  const jan = /\d{8}/.test(cell('JAN')), staff = cell('企画担当') || cell('企画'), edition = cell('版数');
+  return jan || !empty(staff) || !empty(edition) ? 'item' : 'sep';
+}
+
+// シートの行を商品の一覧にする。dateOf は行番号から基準日を返し、cut より前の行は新規に足さない
+// 年ごとに分かれたシートは1つのタブに入るので、seen と offset で行を続けて数える
+function readRows(data, firstRow, cols, dateOf, cut, seen = {}, offset = 0) {
+  const out = [], nameCol = cols.find(c => c.name === '商品名'), janCol = cols.find(c => c.name === 'JAN'), edCol = cols.find(c => c.name === '版数');
+  let sep = '', wasSep = false, seps = 0;
+  for (let r = firstRow; r < data.length; r++) {
+    const row = data[r], kind = rowKind(row, cols);
+    if (kind === 'blank') continue;
+    if (kind === 'sep') {
+      const label = row.map(v => String(v).trim()).filter(v => v && v !== '-').join(' ');
+      sep = wasSep ? `${sep} ${label}`.trim() : label;
+      wasSep = true; seps++;
+      continue;
+    }
+    wasSep = false;
+    const jan = janCol ? clean(row[janCol.index]) : '', edition = edCol ? clean(row[edCol.index]) : '', name = clean(row[nameCol.index]);
+    const base = `${jan}|${edition}|${name}`;
+    seen[base] = (seen[base] || 0) + 1;
+    const values = {};
+    for (const c of cols) values[c.code] = text(row[c.index]);
+    const date = dateOf ? dateOf(r) : null;
+    out.push({ row: offset + r + 1, jan, edition, name, key: `${base}#${seen[base]}`, sep, values, future: !(date instanceof Date) || date >= cut });
+  }
+  return { items: out, seps };
+}
+
+// 同じ商品を探す。完全に同じ行、JANと版数、商品名の順に、1対1で決まるものだけつなぐ
+function matchRows(items, records) {
+  const pairs = new Map(), free = new Set(records), left = new Set(items);
+  const pass = (ofItem, ofRec, unique) => {
+    const byKey = new Map();
+    for (const rec of free) { const k = ofRec(rec); if (k) { if (!byKey.has(k)) byKey.set(k, []); byKey.get(k).push(rec); } }
+    const counts = {};
+    for (const it of left) { const k = ofItem(it); if (k) counts[k] = (counts[k] || 0) + 1; }
+    for (const it of [...left]) {
+      const k = ofItem(it), list = k && byKey.get(k);
+      if (!list || !list.length || (unique && (list.length > 1 || counts[k] > 1))) continue;
+      const rec = list.shift();
+      pairs.set(it, rec); left.delete(it); free.delete(rec);
+    }
+  };
+  const parts = rec => { const [jan, edition, rest] = String(rec.rowKey).split('|'); return { jan, edition, name: String(rest || '').replace(/#\d+$/, '') }; };
+  pass(it => it.key, rec => rec.rowKey, false);
+  pass(it => it.jan && `${it.jan}|${it.edition}`, rec => { const p = parts(rec); return p.jan && `${p.jan}|${p.edition}`; }, true);
+  pass(it => it.name, rec => parts(rec).name, true);
+  return { pairs, left: [...left], free: [...free] };
+}
+
+// 1セルの判定。キントーンで変わっていたらキントーンを残す
+function mergeCell(sheet, base, kintone) {
+  if (sheet === base) return kintone === base ? 'same' : 'kintone';
+  if (kintone === sheet) return 'agreed';
+  return kintone === base ? 'write' : 'conflict';
+}
+
+function metaOf(it, snapshot) {
+  return { [META.order]: { value: it.row }, [META.sep]: { value: it.sep }, [META.rowKey]: { value: it.key }, [META.snapshot]: { value: JSON.stringify(snapshot) } };
+}
+function newRecord(tab, it) {
+  const record = metaOf(it, it.values);
+  for (const code of Object.keys(it.values)) record[code] = { value: it.values[code] };
+  record[tab.key] = { value: tab.name };
+  record['削除'] = { value: ['削除'] }; // カプセルの一覧には出さない
+  return record;
+}
+
+// 何を足し、何を書き換えるかを決める。ここではキントーンを変えない
+function planTab(tab, items, records) {
+  const { pairs, left, free } = matchRows(items, records);
+  const plan = { adds: [], updates: [], conflicts: [], missing: free, skipped: 0, same: 0, kintoneKept: 0, cells: 0 };
+  for (const it of left) {
+    if (it.future) plan.adds.push({ item: it, record: newRecord(tab, it) }); else plan.skipped++;
+  }
+  for (const [it, rec] of pairs) {
+    const snapshot = { ...rec.snapshot }, fields = {};
+    for (const code of Object.keys(it.values)) {
+      const s = it.values[code], b = snapshot[code] == null ? '' : snapshot[code], k = rec.values[code] == null ? '' : rec.values[code];
+      const how = mergeCell(s, b, k);
+      plan.cells++;
+      if (how === 'write') fields[code] = { value: s };
+      else if (how === 'conflict') plan.conflicts.push({ id: rec.id, name: it.name, code, sheet: s, kintone: k, base: b });
+      else if (how === 'kintone') plan.kintoneKept++;
+      snapshot[code] = s;
+    }
+    const moved = String(rec.order) !== String(it.row) || rec.sep !== it.sep || rec.rowKey !== it.key;
+    const noted = JSON.stringify(rec.snapshot) !== JSON.stringify(snapshot);
+    if (!Object.keys(fields).length && !moved && !noted) { plan.same++; continue; }
+    plan.updates.push({ id: rec.id, name: it.name, wrote: Object.keys(fields), record: { ...fields, ...metaOf(it, snapshot) } });
+  }
+  return plan;
+}
+
+// 全セルの突き合わせ。キントーンで直したセルと、本当に違うセルを分けて返す
+function checkTab(items, records) {
+  const { pairs, left, free } = matchRows(items, records);
+  const out = { rows: items.length, matched: pairs.size, notImported: left.filter(i => i.future).length, past: left.filter(i => !i.future).length, extra: free.length, cells: 0, equal: 0, kintoneNewer: 0, differ: [] };
+  for (const [it, rec] of pairs) for (const code of Object.keys(it.values)) {
+    const s = it.values[code], k = rec.values[code] == null ? '' : rec.values[code], b = rec.snapshot[code] == null ? '' : rec.snapshot[code];
+    out.cells++;
+    if (s === k) out.equal++;
+    else if (k !== b && s === b) out.kintoneNewer++;
+    else out.differ.push({ id: rec.id, name: it.name, code, sheet: s, kintone: k });
+  }
+  return out;
+}
+
+// Apps Script 側。シートは読むだけで、書き換えるのはキントーンとチェック用のシートだけ
+const SHEET_ID = '__SHEET_ID__'; // 貼るときに本物に置き換える。公開の場所に番号を残さない
+const KINTONE = 'https://bushiroad-group.cybozu.com';
+const SOURCES = [
+  { tab: '一般MD', sheets: [['一般MD_2026', 1, 2]] },
+  { tab: 'てくとも', sheets: [['てくとも_2026', 2, 3]] },
+  { tab: '催事', sheets: [['催事_2026', 1, 2]] },
+  { tab: 'ライブ・EC', sheets: [['ﾗｲﾌﾞ・EC（直販系）_2026', 1, 2]] },
+  { tab: 'ウェルビー', sheets: [['ｳｪﾙﾋﾞｰ', 1, 2]] },
+  { tab: 'プライズ・ぬいぐるみ', sheets: [['ﾌﾟﾗｲｽﾞ･ぬいぐるみ2026', 2, 3], ['ﾌﾟﾗｲｽﾞ･ぬいぐるみ2027', 2, 3]] },
+  { tab: 'フィギュア', sheets: [['ﾌｨｷﾞｭｱ_2026_2027', 1, 2], ['ﾌｨｷﾞｭｱ_2028', 1, 2]] },
+  { tab: '特典・販促物', sheets: [['特典・販促物', 2, 1]] },
+  { tab: '声優MD+ボドゲ', sheets: [['声優MD+ﾎﾞﾄﾞｹﾞ2026', 1, 2]] },
+  { tab: '海外再販', sheets: [['海外再販', 1, 2]] },
+  { tab: 'オンラインくじ', sheets: [['オンラインくじ2026', 1, 2], ['オンラインくじ2027', 1, 2]] },
+  { tab: 'OEM/他', sheets: [['OEM/他', 1, 2]] },
+  { tab: 'リアルくじ', sheets: [['リアルくじ2026', 1, 2]] },
+];
+const DATE_CODES = ['シート_発売日', 'シート_納品日', 'シート_納品日現場', 'シート_納品日先行EC'];
+const TIME_LIMIT = 270000; // 1回の実行は6分まで。超えそうなら続きを予約する
+const DETAIL_MAX = 3000;
+
+const prop = key => PropertiesService.getScriptProperties().getProperty(key);
+const setProp = (key, value) => PropertiesService.getScriptProperties().setProperty(key, String(value));
+const appId = () => Number(prop('APP') || 866);
+
+function api_(method, path, body) {
+  const url = KINTONE + path + (method === 'GET' ? '?' + Object.keys(body).map(k => `${k}=${encodeURIComponent(Array.isArray(body[k]) ? '' : body[k])}`).join('&') : '');
+  const headers = { 'X-Cybozu-API-Token': prop(`TOKEN_${appId()}`) };
+  if (method !== 'GET') headers['Content-Type'] = 'application/json';
+  const res = UrlFetchApp.fetch(url, { method, headers, payload: method === 'GET' ? undefined : JSON.stringify(body), muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) throw new Error(`キントーン ${res.getResponseCode()}: ${res.getContentText().slice(0, 300)}`);
+  return JSON.parse(res.getContentText());
+}
+
+// 1つのタブに入るシートを読む。知らない列は保存先がないので報告だけする
+function readTab_(source, cut) {
+  const book = SpreadsheetApp.openById(SHEET_ID), known = new Set(SheetTabs.fields.map(f => f.code).concat('その他メモ'));
+  const items = [], unknown = [], seen = {};
+  let seps = 0, rows = 0;
+  source.sheets.forEach(([name, nameRow, subRow], i) => {
+    const sh = book.getSheetByName(name);
+    if (!sh) throw new Error(`シートが見つかりません: ${name}`);
+    const data = sh.getDataRange().getDisplayValues();
+    const all = columnsOf(data[nameRow - 1], data[subRow - 1], SheetTabs.parse);
+    const cols = all.filter(c => known.has(c.code));
+    all.filter(c => !known.has(c.code)).forEach(c => unknown.push(`${name}:${c.name}`));
+    const dates = DATE_CODES.map(code => cols.find(c => c.code === code)).filter(Boolean).map(c => sh.getRange(1, c.index + 1, data.length, 1).getValues());
+    const dateOf = r => { for (const d of dates) if (d[r][0] instanceof Date) return d[r][0]; return null; };
+    const read = readRows(data, Math.max(nameRow, subRow), cols, dateOf, cut, seen, i * 100000);
+    items.push(...read.items); seps += read.seps; rows += data.length;
+  });
+  return { items, seps, rows, unknown };
+}
+
+function records_(tab, codes) {
+  const out = [], fields = ['$id', META.order, META.sep, META.rowKey, META.snapshot, ...codes];
+  let last = 0;
+  for (;;) {
+    const params = [`app=${appId()}`, `query=${encodeURIComponent(`${SheetTabs.key} = "${tab}" and $id > ${last} order by $id asc limit 500`)}`, ...fields.map((f, i) => `fields[${i}]=${encodeURIComponent(f)}`)].join('&');
+    const res = UrlFetchApp.fetch(`${KINTONE}/k/v1/records.json?${params}`, { headers: { 'X-Cybozu-API-Token': prop(`TOKEN_${appId()}`) }, muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) throw new Error(`キントーン ${res.getResponseCode()}: ${res.getContentText().slice(0, 300)}`);
+    const list = JSON.parse(res.getContentText()).records;
+    for (const r of list) {
+      const values = {};
+      for (const c of codes) values[c] = String(r[c].value == null ? '' : r[c].value).replace(/\r\n/g, '\n');
+      let snapshot = {};
+      try { snapshot = JSON.parse(r[META.snapshot].value || '{}'); } catch (_) {}
+      out.push({ id: r.$id.value, rowKey: r[META.rowKey].value, order: r[META.order].value, sep: r[META.sep].value, snapshot, values });
+    }
+    if (list.length < 500) return out;
+    last = list[list.length - 1].$id.value;
+  }
+}
+
+function write_(plan) {
+  const limit = Number(prop('LIMIT') || 0), adds = limit ? plan.adds.slice(0, limit) : plan.adds;
+  for (let i = 0; i < adds.length; i += 100) api_('POST', '/k/v1/records.json', { app: appId(), records: adds.slice(i, i + 100).map(a => a.record) });
+  for (let i = 0; i < plan.updates.length; i += 100) api_('PUT', '/k/v1/records.json', { app: appId(), records: plan.updates.slice(i, i + 100).map(u => ({ id: u.id, record: u.record })) });
+  return adds.length;
+}
+
+// チェック用のシート。無ければ作る
+function report_() {
+  const id = prop('REPORT_ID');
+  if (id) return SpreadsheetApp.openById(id);
+  const book = SpreadsheetApp.create('進捗シート 連携チェック');
+  setProp('REPORT_ID', book.getId());
+  book.getSheets()[0].setName('概要').appendRow(['日時', '動作', 'アプリ', 'タブ', '商品の行', '区切りの行', '足した行', '書き換えた行', 'キントーン優先のセル', 'シートにない行', '発売済みで足さない行', '全セル', '一致', 'キントーンが新しい', '違うセル', '保存先のない列']);
+  book.insertSheet('キントーン優先').appendRow(['日時', 'タブ', 'レコード', '商品名', '項目', 'シートの値', 'キントーンの値', '前回の値']);
+  book.insertSheet('違うセル').appendRow(['日時', 'タブ', 'レコード', '商品名', '項目', 'シートの値', 'キントーンの値']);
+  book.insertSheet('シートにない行').appendRow(['日時', 'タブ', 'レコード', '行キー']);
+  return book;
+}
+function detail_(book, name, rows) {
+  if (!rows.length) return;
+  const sh = book.getSheetByName(name), cut = rows.slice(0, DETAIL_MAX);
+  sh.getRange(sh.getLastRow() + 1, 1, cut.length, cut[0].length).setValues(cut.map(r => r.map(v => `'${v}`)));
+}
+
+function runTab_(source, mode, cut) {
+  const tab = { name: source.tab, key: SheetTabs.key }, now = new Date(), book = report_();
+  const read = readTab_(source, cut), codes = [...new Set(read.items.flatMap(i => Object.keys(i.values)))];
+  let records = records_(source.tab, codes), plan = planTab(tab, read.items, records), added = plan.adds.length;
+  if (mode === 'write') {
+    added = write_(plan);
+    records = records_(source.tab, codes);
+  }
+  const check = checkTab(read.items, records), wrote = plan.updates.filter(u => u.wrote.length).length;
+  const label = code => { const f = SheetTabs.fields.find(x => x.code === code); return f ? f.label : code; };
+  book.getSheetByName('概要').appendRow([now, { preview: '下見', write: '反映', check: 'チェック' }[mode], appId(), source.tab, read.items.length, read.seps, added, wrote, plan.conflicts.length, plan.missing.length, plan.skipped, check.cells, check.equal, check.kintoneNewer, check.differ.length, read.unknown.join(' / ')]);
+  if (mode !== 'check') detail_(book, 'キントーン優先', plan.conflicts.map(c => [now, source.tab, c.id, c.name, label(c.code), c.sheet, c.kintone, c.base]));
+  if (mode === 'write' || mode === 'check') detail_(book, '違うセル', check.differ.map(d => [now, source.tab, d.id, d.name, label(d.code), d.sheet, d.kintone]));
+  if (mode !== 'preview') detail_(book, 'シートにない行', plan.missing.map(m => [now, source.tab, m.id, m.rowKey]));
+  console.log(`${source.tab}: 商品${read.items.length} 区切り${read.seps} 足す${added} 書換${wrote} キントーン優先${plan.conflicts.length} 違う${check.differ.length}`);
+}
+
+function runAll_(mode, from) {
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(1000)) { console.log('別の実行が動いています'); return; }
+  try {
+    const start = Date.now(), only = (prop('TABS') || '').split(',').filter(Boolean);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const list = SOURCES.filter(s => !only.length || only.includes(s.tab));
+    for (let i = from; i < list.length; i++) {
+      if (Date.now() - start > TIME_LIMIT) {
+        setProp('RESUME', JSON.stringify({ mode, at: i }));
+        ScriptApp.newTrigger('resume').timeBased().after(60000).create();
+        console.log(`続きは1分後: ${list[i].tab}から`);
+        return;
+      }
+      runTab_(list[i], mode, today);
+    }
+  } finally { lock.releaseLock(); }
+}
+
+// エディタから実行する入口
+function preview() { runAll_('preview', 0); }    // キントーンを変えずに、何が起きるかだけ出す
+function runNow() { runAll_('write', 0); }       // 流し込みと反映。毎晩動くのもこれ
+function check() { runAll_('check', 0); }        // 全セルの突き合わせだけ
+function resume() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'resume').forEach(t => ScriptApp.deleteTrigger(t));
+  const r = JSON.parse(prop('RESUME'));
+  runAll_(r.mode, r.at);
+}
+function installNightly() {
+  removeNightly();
+  ScriptApp.newTrigger('runNow').timeBased().atHour(2).everyDays(1).inTimezone('Asia/Tokyo').create();
+}
+function removeNightly() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'runNow').forEach(t => ScriptApp.deleteTrigger(t));
+}
