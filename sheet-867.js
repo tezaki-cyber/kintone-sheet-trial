@@ -26,8 +26,9 @@
       if (!tab || !tab.value) return ev;
       kintone.app.record.setGroupFieldOpen('シート項目', true);
       if (ev.type === 'app.record.detail.show') setTimeout(() => {
-        const el = [...document.querySelectorAll('.group-label-gaia, .control-label-text-gaia, span')].find(x => x.textContent.trim() === 'シート項目' && !x.children.length);
-        if (el) el.scrollIntoView({ block: 'start' });
+        // 枠の見出しは「シート項目(カプセル以外のタブ)」
+        const el = [...document.querySelectorAll('.group-label-gaia')].find(x => x.textContent.trim().startsWith('シート項目'));
+        if (el) (el.closest('.control-group-gaia') || el).scrollIntoView({ block: 'start' });
       }, 300);
     } catch (_) {}
     return ev;
