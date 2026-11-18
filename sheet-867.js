@@ -18,6 +18,20 @@
     addButton();
     return ev;
   });
+  // 商品を開いたら、写しの入っている「シート項目」の枠を開く(2026-11-18 江崎さん「レコードを開いても何もわからない」)。
+  // 進捗シートの値は シート_ の項目にあり、その枠は閉じた状態で画面のずっと下にあるため。詳細では枠の位置まで動かす
+  kintone.events.on(['app.record.detail.show', 'app.record.edit.show'], ev => {
+    try {
+      const tab = ev.record['シート_進捗タブ'];
+      if (!tab || !tab.value) return ev;
+      kintone.app.record.setGroupFieldOpen('シート項目', true);
+      if (ev.type === 'app.record.detail.show') setTimeout(() => {
+        const el = [...document.querySelectorAll('.group-label-gaia, .control-label-text-gaia, span')].find(x => x.textContent.trim() === 'シート項目' && !x.children.length);
+        if (el) el.scrollIntoView({ block: 'start' });
+      }, 300);
+    } catch (_) {}
+    return ev;
+  });
   // カスタマイズ一覧に置いた要素の中へ画面を入れる。ふだんは窓いっぱいに広げ、解除すると一覧の残り全部を使う
   function mount(root) {
     const f = document.createElement('iframe');
