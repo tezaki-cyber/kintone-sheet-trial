@@ -61,7 +61,8 @@ function agsJudge(json) {
       if (kk) { mark(c, '納品済みの商品', row); continue; }
       if (Y.unsure && Y.unsure.has(row)) { mark(c, '?'); continue; }
       const sayPast = /を\d+日過ぎた/.test(c.label), own = /^校了日\(/.test(c.label);
-      if (own ? (!K || (sayPast ? K >= today : K < today)) : (!!K || !E)) { mark(c, '年の読み違い', row, `校了 ${md(K)} 納品 ${md(E)}`); continue; }
+      const byE = /^納品日\(/.test(c.label);
+      if (byE ? !(E && E < today) : own ? (!K || (sayPast ? K >= today : K < today)) : (!!K || !E)) { mark(c, '年の読み違い', row, `校了 ${md(K)} 納品 ${md(E)}`); continue; }
       mark(c, 'ok');
     } else if (c.kind === 'rule' && c.when !== 'status') {
       const T = truth(row, c.dc); if (!T || (Y.unsure && Y.unsure.has(row))) { mark(c, '?'); continue; }
