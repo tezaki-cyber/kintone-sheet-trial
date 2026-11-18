@@ -14,7 +14,7 @@ function agsExtract() {
     } else if (it.kind === 'conv') {
       const said = `${it.conv.根拠 || ''} ${it.conv.理由 || ''}`;
       c.code = k.split(':')[1]; c.val = String(it.conv.値 || ''); c.col = it.convC; c.target = it.conv.対象 === undefined ? null : String(it.conv.対象 || '');
-      c.keys = Object.keys(it.conv).join(','); c.sample = /サンプル|見本|色校|校正刷|仕分け/.test(said); c.ship = /出荷|発送/.test(said); c.deliv = /納品|着荷|届/.test(said);
+      c.keys = Object.keys(it.conv).join(','); c.day = String(it.conv.日 || '').slice(0, 10); c.conf = String(it.conv.確かさ === undefined ? '' : it.conv.確かさ).slice(0, 8); c.sample = /サンプル|見本|色校|校正刷|仕分け/.test(said); c.ship = /出荷|発送/.test(said); c.deliv = /納品|着荷|届/.test(said);
     } else if (it.kind === 'smell') {
       c.danger = it.smell; c.risk = String(it.risk || '').slice(0, 140); c.event = String(it.event || '').slice(0, 40);
       const xs = (ag.smell && ag.smell.get(String(r.id)) || []).filter(x => (x.event || '') === (it.event || ''));
@@ -35,7 +35,11 @@ function agsJudge(json) {
   const unusedMemo = new Map();
   const unused = (dc, bc) => { const key = dc + ':' + bc; if (!unusedMemo.has(key)) { const old = real.filter(r => { const d = truth(r, dc); return d && d < today && t - d <= 180 * D; }); unusedMemo.set(key, old.length >= 8 && old.filter(r => String(r.v[bc] || '').trim()).length < old.length * .3); } return unusedMemo.get(key); };
   const has = new Set(J.claims.filter(c => c.kind === 'rule' && c.when === 'past').map(c => c.id + '|past|' + c.dc));
-  const res = { total: 0, ok: 0, ng: {}, unknown: 0, byKind: {}, samples: {}, stOpen: {}, age: {}, convKeys: '', lines: {} };
+  const res = { total: 0, ok: 0, ng: {}, unknown: 0, byKind: {}, samples: {}, stOpen: {}, age: {}, convKeys: '', lines: {}, convAge: {}, convConf: {} };
+  const TYPES = [/アクリルスタンド|アクスタ/, /アクリルキーホルダー|アクキー/, /缶バッジ/, /ポスター/, /[TＴ]シャツ/, /タオル/, /タペストリー/, /ブロマイド/, /ステッカー/, /クリアファイル/, /うちわ/, /ぬいぐるみ/, /フィギュア/, /パーカー/, /バッグ/, /ポーチ/, /色紙/, /アクリルブロック/, /ラバーバンド|ラババン/, /ペンライト/, /キーホルダー/, /取説|取扱説明書/, /台紙/, /BOX/];
+  const evRows = new Map(); for (const c of J.claims) if (c.kind === 'smell') (evRows.get(c.event) || evRows.set(c.event, []).get(c.event)).push(c.id);
+  const typeOk = c => { const ts = TYPES.filter(re => re.test(c.event || '')); if (!ts.length) return true; const nm = id => String((byId.get(id) || { v: [] }).v[NAME] || ''); const any = (evRows.get(c.event) || []).some(id => ts.some(re => re.test(nm(id)))); return !any || ts.some(re => re.test(nm(c.id))); };
+  const convDeliv = row => { for (const [cc, k] of CONV_COL) { if (k[0] !== '会話_納品日') continue; const m = convMark(row, cc), v = m && m.kind === 'wait' && String(m.it.値 || '').match(/^(\d{4})-(\d\d)-(\d\d)$/); if (v && new Date(+v[1], v[2] - 1, +v[3]) <= today) return true; } return false; };
   for (const c of J.claims) { const kd = c.kind === 'rule' && c.when === 'status' ? 'status' : c.kind; (res.lines[kd] = res.lines[kd] || new Set()).add(c.key + '|' + c.label); }
   for (const k in res.lines) res.lines[k] = res.lines[k].size;
   const mark = (c, v, row, note) => {
@@ -68,6 +72,7 @@ function agsJudge(json) {
       mark(c, 'ok');
     } else if (c.kind === 'conv') {
       if (c.target && c.target !== '本体' && c.target !== '不明') { mark(c, '本体の話ではない', row, c.target.slice(0, 10)); continue; }
+      { const u = agParts(String(c.day || '').replace(/-/g, '/')), ud = u ? agNear(u, today) : null, a = ud ? Math.round((t - ud) / D) : null, b = a == null ? '不明' : a <= 7 ? '7日以内' : a <= 14 ? '14日以内' : a <= 30 ? '30日以内' : '30日より前'; res.convAge[b] = (res.convAge[b] || 0) + 1; res.convConf[c.conf || '無し'] = (res.convConf[c.conf || '無し'] || 0) + 1; }
       if ((c.code === '会話_工程' || c.code === '会話_納品日') && c.sample) { mark(c, 'サンプルの話', row); continue; }
       if (c.code === '会話_納品日' && c.ship && !c.deliv) { mark(c, '出荷日を納品日と取り違え', row); continue; }
       const v = c.val.match(/^(\d{4})-(\d\d)-(\d\d)$/);
@@ -83,7 +88,9 @@ function agsJudge(json) {
     } else if (c.kind === 'smell') {
       { const u = c.x && agParts(String(c.x.upd).replace(/^(\d{4})-(\d\d)-(\d\d).*$/, '$1/$2/$3')), ud = u ? agNear(u, today) : null, a = ud ? Math.round((t - ud) / D) : null, b = a == null ? '不明' : a <= 7 ? '7日以内' : a <= 14 ? '14日以内' : a <= 30 ? '30日以内' : '30日より前'; res.age[b] = (res.age[b] || 0) + 1; }
       if (c.x && c.x.resolved) { mark(c, '片付いている', row); continue; }
-      if (kk && !(c.x && c.x.post)) { mark(c, '納品済みの商品', row); continue; }
+      if (kk && !(c.x && c.x.post) && (!E || E - t <= 7 * D)) { mark(c, '納品済みの商品', row); continue; }
+      if (!typeOk(c)) { mark(c, '問題の品目と違う商品', row, c.event); continue; }
+      if (/過ぎ/.test(c.risk) && convDeliv(row)) { mark(c, '会話では納品済み', row); continue; }
       const left = E ? Math.round((E - t) / D) : null, m1 = c.risk.match(/納品まで(\d+)日/), m2 = c.risk.match(/あと(\d+)日/), m3 = c.risk.match(/を(\d+)日過ぎ/);
       const said = m1 ? +m1[1] : m2 ? +m2[1] : m3 ? -m3[1] : null;
       if (said != null && (left == null || (Y.unsure && Y.unsure.has(row)))) { mark(c, '?'); continue; }
