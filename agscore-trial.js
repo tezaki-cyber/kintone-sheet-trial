@@ -49,7 +49,7 @@ function agsJudge(json) {
     const row = byId.get(c.id); if (!row) { mark(c, '?'); continue; }
     const o = Y.yr.get(row) || {}, E = o.納品 || o.発売 || o.出荷 || null, stage = agStage(sc != null ? row.v[sc] : ''), kk = kc >= 0 && !!String(row.v[kc] || '').trim();
     if (c.kind === 'rule' && c.when !== 'status') {
-      const T = truth(row, c.dc); if (!T) { mark(c, '?'); continue; }
+      const T = truth(row, c.dc); if (!T || (Y.unsure && Y.unsure.has(row))) { mark(c, '?'); continue; }
       const inWeek = T >= mon && T <= sun, inPast = T < today && t - T <= c.days * D;
       if (c.when === 'week' ? !inWeek : !inPast) { mark(c, '年の読み違い', row, `本当は ${md(T)}`); continue; }
       if (c.bc != null && unused(c.dc, c.bc)) { mark(c, '使われていない欄', row, COLS[c.bc].name.replace('\n', '')); continue; }
@@ -60,7 +60,7 @@ function agsJudge(json) {
     } else if (c.kind === 'rule') {
       const st = String(row.v[c.bc] || '').trim().replace(/\s+/g, ' '), T = c.dc != null ? truth(row, c.dc) : null;
       if (!st || DONE2.test(st)) { mark(c, 'もう済んでいる', row, `「${st.slice(0, 20)}」`); continue; }
-      if (!T) { mark(c, '?'); continue; }
+      if (!T || (Y.unsure && Y.unsure.has(row))) { mark(c, '?'); continue; }
       if (T < t - 45 * D || T > +sun + 56 * D) { mark(c, '年の読み違い', row, `本当は ${md(T)}`); continue; }
       res.stOpen[st.slice(0, 24)] = (res.stOpen[st.slice(0, 24)] || 0) + 1;
       mark(c, 'ok');
@@ -81,7 +81,7 @@ function agsJudge(json) {
       if (kk && !(c.x && c.x.post)) { mark(c, '納品済みの商品', row); continue; }
       const left = E ? Math.round((E - t) / D) : null, m1 = c.risk.match(/納品まで(\d+)日/), m2 = c.risk.match(/あと(\d+)日/), m3 = c.risk.match(/を(\d+)日過ぎ/);
       const said = m1 ? +m1[1] : m2 ? +m2[1] : m3 ? -m3[1] : null;
-      if (said != null && left == null) { mark(c, '?'); continue; }
+      if (said != null && (left == null || (Y.unsure && Y.unsure.has(row)))) { mark(c, '?'); continue; }
       if (said != null && Math.abs(said - left) > 3) { mark(c, '別の商品の納品日', row, `本当は ${md(E)}(${left < 0 ? -left + '日前' : 'あと' + left + '日'})`); continue; }
       if (c.danger === '高' && left != null && left > (c.x && c.x.fmax || 14) + 30) { mark(c, '危なさが高すぎ', row, `納品 ${md(E)}`); continue; }
       if (/止まらない見込み/.test(c.risk)) { mark(c, '言い方が分からない', row); continue; }
